@@ -8,6 +8,8 @@ ResourceMapper = {
     "Camera_state": 6,
     "Automation_list": 7,
     "Automation_alert_list": 8,
+    "Device_metadata": 9,
+    "Personal_information": 10
 }
 
 RightsMapper = {

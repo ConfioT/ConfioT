@@ -1,0 +1,59 @@
+{
+    "Device": "Yunmai-smart-scale-new",
+    "Resource": [
+        "Data_host",
+        "Data_guest",
+        "Access_list",
+        "Device_metadata",
+        "Personal_information"
+    ],
+    "Configurations": [
+        {
+            "configuration": "[default]",
+            "Description": "",
+            "constrains-1": "",
+            "constrains-2": "",
+            "policies-1": "<Device_metadata, MiHome, host, (0,1,2)>",
+            "policies-2": "<Personal_information, MiHome, host, (0,1,2)>",
+            "policies-3": "<Data_*, MiHome, host, (0,1,2)>",
+            "policies-4": "<Access_list, MiHome, host, (0,1,2)>",
+            "policies-5": "<Access_list, MiHome, guest, (0), 1>"
+        },
+        {
+            "configuration": "Rename_the_body_fat_scale_to_its_original_name",
+            "params": [
+                "userA"
+            ],
+            "Description": "",
+            "constrains-1": "<Access_list, MiHome, userA, (1)>"
+        },
+        {
+            "configuration": "Set_up_Visitor_Mode_with_a_nickname_on_the_bo",
+            "params": [
+                "userA"
+            ],
+            "Description": "",
+            "constrains-1": "<Access_list, MiHome, userA, (1)>"
+        },
+        {
+            "configuration": "Confirm_deletion_of_all_guest_users_data_from_revoke",
+            "params": [
+                "userA",
+                "userB"
+            ],
+            "Description": "",
+            "constrains-1": "<Access_list, MiHome, userA, (1)>",
+            "policies-1": ""
+        },
+        {
+            "configuration": "share",
+            "params": [
+                "userA",
+                "userB"
+            ],
+            "Description": "",
+            "constrains-1": "<Access_list, MiHome, userA, (1)>",
+            "policies-1": ""
+        }
+    ]
+}
