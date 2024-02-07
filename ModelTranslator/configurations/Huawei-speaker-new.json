@@ -1,0 +1,49 @@
+{
+    "Device": "Huawei-speaker-new",
+    "Resource": [
+        "Data_host",
+        "Data_guest",
+        "Access_list",
+        "Personal_information"
+    ],
+    "Configurations": [
+        {
+            "configuration": "[default]",
+            "Description": "",
+            "constrains-1": "",
+            "constrains-2": "",
+            "policies-1": "<Automation_list, MiHome, host, (0,1,2)>",
+            "policies-2": "<Personal_information, MiHome, host, (0,1,2)>",
+            "policies-3": "<Data_*, MiHome, host, (0,1,2)>",
+            "policies-4": "<Access_list, MiHome, host, (0,1,2)>"
+        },
+        {
+            "configuration": "Add_a_new_automation_scene_with_the_name_TESTA",
+            "params": [
+                "userA"
+            ],
+            "Description": "闹钟",
+            "constrains-1": "<Automation_list, HuaWei_Smart_Home, userA, (1)>",
+            "constrains-2": "",
+            "policies-1": "<Device_state, Timing, userA, (1,2)>"
+        },
+        {
+            "configuration": "View_or_delete_dialogue_records_of_AI_Speaker",
+            "params": [
+                "userA"
+            ],
+            "Description": "",
+            "constrains-1": "<Access_list, MiHome, userA, (1)>"
+        },
+        {
+            "configuration": "share",
+            "params": [
+                "userA",
+                "userB"
+            ],
+            "Description": "",
+            "constrains-1": "<Access_list, MiHome, userA, (1)>",
+            "policies-1": ""
+        }
+    ]
+}

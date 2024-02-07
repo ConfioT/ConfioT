@@ -253,13 +253,62 @@ inline check_policy(_res, channel_id, user_id, right_id){
 
 
 /******************** Configurations *************************/
+inline Add_a_new_automation_scene_with_the_name_TESTA(userA)
+{
+    atomic{
+        check_policy_result = false;
+            res_need_check.id = 7;
+            check_policy(res_need_check, 5, userA, 1);
+
+
+
+        if
+            ::  (check_policy_result == true) ->
+                printf("user_%d perform Add_a_new_automation_scene_with_the_name_TESTA \n", userA);
+                // Create Policies
+                    Policies[PolicyNum].id = PolicyNum;
+                    Policies[PolicyNum].resource.id = 5;
+                    Policies[PolicyNum].chans[0].id = 7;
+                        Policies[PolicyNum].subs[0].id = userA;
+                    Policies[PolicyNum].rights[0].id = 1;
+                    Policies[PolicyNum].rights[1].id = 2;
+                    PolicyNum = PolicyNum + 1;
+
+
+
+                :: else ->
+                skip;
+        fi;
+    }
+}
+
+inline View_or_delete_dialogue_records_of_AI_Speaker(userA)
+{
+    atomic{
+        check_policy_result = false;
+            res_need_check.id = 1;
+            check_policy(res_need_check, 0, userA, 1);
+
+
+
+        if
+            ::  (check_policy_result == true) ->
+                printf("user_%d perform View_or_delete_dialogue_records_of_AI_Speaker \n", userA);
+
+
+                :: else ->
+                skip;
+        fi;
+    }
+}
+
 inline share(userA,userB)
 {
     atomic{
         check_policy_result = false;
             res_need_check.id = 1;
             check_policy(res_need_check, 0, userA, 1);
-        
+
 
 
         if
@@ -473,8 +522,12 @@ proctype ProcessHost(){
     bool COMPETE_host_3 = false;
     bool COMPETE_host_4 = false;
     bool COMPETE_host_5 = false;
+        bool COMPETE_host_Add_a_new_automation_scene_with_the_name_TESTA = false;
+
+        bool COMPETE_host_View_or_delete_dialogue_records_of_AI_Speaker = false;
+
         bool COMPETE_host_share = false;
-    
+
 
     do
         :: (COMPETE_host_1 == false) ->
@@ -522,17 +575,39 @@ proctype ProcessHost(){
                     :: else -> skip;
                 fi;
             }
+        :: (COMPETE_host_Add_a_new_automation_scene_with_the_name_TESTA == false) ->
+            atomic{
+                if
+                    :: (COMPETE_host_Add_a_new_automation_scene_with_the_name_TESTA == false) ->
+                        COMPETE_host_Add_a_new_automation_scene_with_the_name_TESTA = true;
+                        Add_a_new_automation_scene_with_the_name_TESTA(host);
+
+                    :: else -> skip;
+                fi;
+            }
+
+        :: (COMPETE_host_View_or_delete_dialogue_records_of_AI_Speaker == false) ->
+            atomic{
+                if
+                    :: (COMPETE_host_View_or_delete_dialogue_records_of_AI_Speaker == false) ->
+                        COMPETE_host_View_or_delete_dialogue_records_of_AI_Speaker = true;
+                        View_or_delete_dialogue_records_of_AI_Speaker(host);
+
+                    :: else -> skip;
+                fi;
+            }
+
         :: (COMPETE_host_share == false) ->
             atomic{
                 if
                     :: (COMPETE_host_share == false) ->
                         COMPETE_host_share = true;
                         share(host, guest);
-                        
+
                     :: else -> skip;
                 fi;
             }
-    
+
 
     od;
 }
@@ -562,8 +637,12 @@ proctype ProcessGuest(){
     bool COMPETE_guest_3 = false;
     bool COMPETE_guest_4 = false;
     bool COMPETE_guest_5 = false;
+        bool COMPETE_guest_Add_a_new_automation_scene_with_the_name_TESTA = false;
+
+        bool COMPETE_guest_View_or_delete_dialogue_records_of_AI_Speaker = false;
+
         bool COMPETE_guest_share = false;
-    
+
 
     do
         :: (COMPETE_guest_1 == false) ->
@@ -612,17 +691,39 @@ proctype ProcessGuest(){
                     :: else -> skip;
                 fi;
             }
+        :: (COMPETE_guest_Add_a_new_automation_scene_with_the_name_TESTA == false) ->
+            atomic{
+                if
+                    :: (COMPETE_guest_Add_a_new_automation_scene_with_the_name_TESTA == false) ->
+                        COMPETE_guest_Add_a_new_automation_scene_with_the_name_TESTA = true;
+                        Add_a_new_automation_scene_with_the_name_TESTA(guest);
+
+                    :: else -> skip;
+                fi;
+            }
+
+        :: (COMPETE_guest_View_or_delete_dialogue_records_of_AI_Speaker == false) ->
+            atomic{
+                if
+                    :: (COMPETE_guest_View_or_delete_dialogue_records_of_AI_Speaker == false) ->
+                        COMPETE_guest_View_or_delete_dialogue_records_of_AI_Speaker = true;
+                        View_or_delete_dialogue_records_of_AI_Speaker(guest);
+
+                    :: else -> skip;
+                fi;
+            }
+
         :: (COMPETE_guest_share == false) ->
             atomic{
                 if
                     :: (COMPETE_guest_share == false) ->
                         COMPETE_guest_share = true;
                         share(guest, host);
-                        
+
                     :: else -> skip;
                 fi;
             }
-    
+
 
     od;
 }
@@ -646,30 +747,39 @@ init
             Device.resources[1].id = 0;
             Device.resources[1].data.userId = guest;
             Device.resources[1].data.isEmpty = false;
-            Device.resources[2].id = 5;
-            Device.resources[3].id = 4;
-            Device.resources[4].id = 1;
-            
+            Device.resources[2].id = 1;
+            Device.resources[3].id = 10;
+
 
         /******************** Default Policies *************************/
             Policies[PolicyNum].id = PolicyNum;
-            Policies[PolicyNum].resource.id = 4;
+            Policies[PolicyNum].resource.id = 7;
             Policies[PolicyNum].chans[0].id = 0;
-                Policies[PolicyNum].subs[0].id = guest;
+                Policies[PolicyNum].subs[0].id = host;
             Policies[PolicyNum].rights[0].id = 0;
             Policies[PolicyNum].rights[1].id = 1;
             Policies[PolicyNum].rights[2].id = 2;
             PolicyNum = PolicyNum + 1;
-        
+
             Policies[PolicyNum].id = PolicyNum;
-            Policies[PolicyNum].resource.id = 9;
+            Policies[PolicyNum].resource.id = 10;
             Policies[PolicyNum].chans[0].id = 0;
-                Policies[PolicyNum].subs[0].id = guest;
+                Policies[PolicyNum].subs[0].id = host;
             Policies[PolicyNum].rights[0].id = 0;
             Policies[PolicyNum].rights[1].id = 1;
             Policies[PolicyNum].rights[2].id = 2;
             PolicyNum = PolicyNum + 1;
-        
+
+            Policies[PolicyNum].id = PolicyNum;
+            Policies[PolicyNum].resource.id = 0;
+            Policies[PolicyNum].resource.data.userId = 0;
+            Policies[PolicyNum].chans[0].id = 0;
+                Policies[PolicyNum].subs[0].id = host;
+            Policies[PolicyNum].rights[0].id = 0;
+            Policies[PolicyNum].rights[1].id = 1;
+            Policies[PolicyNum].rights[2].id = 2;
+            PolicyNum = PolicyNum + 1;
+
             Policies[PolicyNum].id = PolicyNum;
             Policies[PolicyNum].resource.id = 1;
             Policies[PolicyNum].chans[0].id = 0;
@@ -678,7 +788,7 @@ init
             Policies[PolicyNum].rights[1].id = 1;
             Policies[PolicyNum].rights[2].id = 2;
             PolicyNum = PolicyNum + 1;
-        
+
 
 
     }

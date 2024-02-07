@@ -422,7 +422,7 @@ inline Operation_control_subdevicelist(userA){
         check_policy_result = false;
         // {resource:4, channel_id: mihome, userA:, right_id: remove}
         res_need_check.id = 4;
-        check_policy(res_need_check, 0, userA, 2)
+        check_policy(res_need_check, -1, userA, 2)
         if
             ::  (check_policy_result == true) ->
                 printf("user_%d control SubDeviceList\n", userA);
@@ -436,11 +436,32 @@ inline Operation_control_subdevicelist(userA){
     }
 }
 
+
+
+inline Operation_view_automationlist(userA){
+    atomic{
+
+        check_policy_result = false;
+        // {resource:4, channel_id: mihome, userA:, right_id: remove}
+        res_need_check.id = 7;
+        check_policy(res_need_check, -1, userA, 0)
+        if
+            ::  (check_policy_result == true) ->
+                skip;
+
+            :: else ->
+                printf("user_%d failed to read automationlist\n", userA);
+                assert (1 == 2);
+        fi;
+
+    }
+}
+
 inline Operation_delete_history(userA, userB){
     atomic{
         check_policy_result = false;
         res_need_check.id = 3;
-        check_policy(res_need_check, 0, userA, 2)
+        check_policy(res_need_check, -1, userA, 2)
         if
             :: (check_policy_result == true) ->
                 printf("user_%d delete history\n", userA);
@@ -533,6 +554,7 @@ proctype ProcessHost(){
     bool COMPETE_host_2 = false;
     bool COMPETE_host_3 = false;
     bool COMPETE_host_4 = false;
+    bool COMPETE_host_5 = false;
 
 
 
@@ -574,6 +596,15 @@ proctype ProcessHost(){
                     :: (COMPETE_host_4 == false) ->
                         COMPETE_host_4 = true;
                         Operation_delete_history(host, host);
+                    :: else -> skip;
+                fi;
+            }
+        :: (COMPETE_host_5 == false) ->
+            atomic{
+                if
+                    :: (COMPETE_host_5 == false) ->
+                        COMPETE_host_5 = true;
+                        Operation_view_automationlist(host);
                     :: else -> skip;
                 fi;
             }
@@ -623,6 +654,7 @@ proctype ProcessGuest(){
     bool COMPETE_guest_2 = false;
     bool COMPETE_guest_3 = false;
     bool COMPETE_guest_4 = false;
+    bool COMPETE_guest_5 = false;
 
 
     {%- for config in Configurations %}
@@ -666,6 +698,17 @@ proctype ProcessGuest(){
                     :: else -> skip;
                 fi;
             }
+
+        :: (COMPETE_guest_5 == false) ->
+            atomic{
+                if
+                    :: (COMPETE_guest_5 == false) ->
+                        COMPETE_guest_5 = true;
+                        Operation_view_automationlist(guest);
+                    :: else -> skip;
+                fi;
+            }
+
 
     {%- for config in Configurations %}
         :: (COMPETE_guest_{{config.ConfigName}} == false) ->
