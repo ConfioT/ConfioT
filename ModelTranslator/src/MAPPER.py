@@ -9,7 +9,8 @@ ResourceMapper = {
     "Automation_list": 7,
     "Automation_alert_list": 8,
     "Device_metadata": 9,
-    "Personal_information": 10
+    "Personal_information": 10,
+    "constrains": 11
 }
 
 RightsMapper = {

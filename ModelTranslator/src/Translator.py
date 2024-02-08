@@ -116,7 +116,7 @@ def ParseConfigurations(file: str):
     解析{device_config.json}
     '''
 
-    global DEVICE_NAME, DEVICE_RESOURCES, DEVICE_POLICIES
+    global DEVICE_NAME, DEVICE_RESOURCES, DEVICE_POLICIES,has_automationlist,has_accesslist
 
     # 未处理的config
     config = {}
@@ -185,3 +185,5 @@ if __name__ == "__main__":
     print(DEVICE_NAME)
     print(DEVICE_RESOURCES)
     print(DEVICE_POLICIES)
+    print(has_automationlist)
+    print(has_accesslist)

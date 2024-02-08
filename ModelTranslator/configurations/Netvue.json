@@ -2,7 +2,7 @@
     "Device": "Netvue-smart-camera",
     "Resource": [
         "Data_*",
-        "Access_list"
+        "constrains"
     ],
     "Configurations": [
         {
@@ -10,7 +10,7 @@
             "Description": "",
             "constrains-1": "",
             "constrains-2": "",
-            "policies-1": "<Access_list, MiHome, host, (0,1,2)>",
+            "policies-1": "<constrains, MiHome, host, (0,1,2)>",
             "policies-2": "<Data_*, MiHome, host, (0,1,2)"
         },
         {
@@ -20,7 +20,7 @@
                 "userB"
             ],
             "Description": "",
-            "constrains-1": "<Access_list, MiHome, userA, (2)>",
+            "constrains-1": "<constrains, MiHome, userA, (2)>",
             "policies-1": ""
         },
         {
@@ -30,7 +30,7 @@
                 "userB"
             ],
             "Description": "",
-            "constrains-1": "<Access_list, MiHome, userA, (1)>",
+            "constrains-1": "<constrains, MiHome, userA, (1)>",
             "policies-1": ""
         },
         {
@@ -40,7 +40,7 @@
                 "userB"
             ],
             "Description": "",
-            "constrains-1": "<Access_list, MiHome, userA, (1)>",
+            "constrains-1": "<constrains, MiHome, userA, (1)>",
             "policies-1": "<Data_*, MiHome, userB, (0), 1>",
             "policies-2": "<Data_*, MiHome, userA, (0)>"
         }

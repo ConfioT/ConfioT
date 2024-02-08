@@ -257,7 +257,7 @@ inline Delete_log_REMOVELOG(userA,userB)
 {
     atomic{
         check_policy_result = false;
-            res_need_check.id = 1;
+            res_need_check.id = 11;
             check_policy(res_need_check, 0, userA, 2);
         
 
@@ -277,7 +277,7 @@ inline Remove_user_REVOKE(userA,userB)
 {
     atomic{
         check_policy_result = false;
-            res_need_check.id = 1;
+            res_need_check.id = 11;
             check_policy(res_need_check, 0, userA, 1);
         
 
@@ -312,7 +312,7 @@ inline share(userA,userB)
 {
     atomic{
         check_policy_result = false;
-            res_need_check.id = 1;
+            res_need_check.id = 11;
             check_policy(res_need_check, 0, userA, 1);
         
 
@@ -769,12 +769,12 @@ init
         Device.resources[0].id = 0;
             Device.resources[0].data.userId = 0;
             Device.resources[0].data.isEmpty = false;
-            Device.resources[1].id = 1;
+            Device.resources[1].id = 11;
             
 
         /******************** Default Policies *************************/
             Policies[PolicyNum].id = PolicyNum;
-            Policies[PolicyNum].resource.id = 1;
+            Policies[PolicyNum].resource.id = 11;
             Policies[PolicyNum].chans[0].id = 0;
                 Policies[PolicyNum].subs[0].id = host;
             Policies[PolicyNum].rights[0].id = 0;
