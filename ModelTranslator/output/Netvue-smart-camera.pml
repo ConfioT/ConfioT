@@ -253,59 +253,41 @@ inline check_policy(_res, channel_id, user_id, right_id){
 
 
 /******************** Configurations *************************/
-{%- for config in Configurations %}
-inline {{config.ConfigName}}(
-{%- for param in config.Params -%}
-{%- if loop.index0 != 0 -%}
-,
-{%- endif -%}
-{{param}}
-{%- endfor -%}
-)
+inline Delete_log_REMOVELOG(userA,userB)
 {
     atomic{
         check_policy_result = false;
-        {%- for constrain in config.Constrains %}
-            res_need_check.id = {{constrain.resource.id}};
-            {% if constrain.resource.id == 0 -%}
-                res_need_check.data.userId = {{constrain.resource.user}};
-            {% elif constrain.resource.id == 3 -%}
-                res_need_check.history.userId = {{constrain.resource.user}}
-            {% endif -%}
-            check_policy(res_need_check, {{constrain.channel}}, {{constrain.user}}, {{constrain.rights[0]}});
-        {% endfor %}
+            res_need_check.id = 1;
+            check_policy(res_need_check, 0, userA, 2);
+        
 
 
         if
             ::  (check_policy_result == true) ->
-                printf("user_%d perform {{config.ConfigName}} \n", {{config.Params[0]}});
+                printf("user_%d perform Delete_log_REMOVELOG \n", userA);
 
 
+                :: else ->
+                skip;
+        fi;
+    }
+}
 
-                {%- for dp in config.Policies %}
-                // Create Policies
-                    {% if dp.canBeRevoked == 1 -%}
-                        Device.canBeRevoked[Device.canBeRevokedNum].id = PolicyNum;
-                        Device.canBeRevokedNum = Device.canBeRevokedNum + 1;
-                    {% endif -%}
-                    Policies[PolicyNum].id = PolicyNum;
-                    Policies[PolicyNum].resource.id = {{dp.resource.id}};
-                    {% if dp.resource.id == 0 -%}
-                        Policies[PolicyNum].resource.data.userId = {{dp.resource.user}};
-                    {% elif dp.resource.id == 3 -%}
-                        Policies[PolicyNum].resource.history.userId = {{dp.resource.user}};
-                    {% endif -%}
-                        Policies[PolicyNum].chans[0].id = {{dp.channel}};
-                        Policies[PolicyNum].subs[0].id = {{dp.user}};
-                    {% for r in dp.rights -%}
-                        Policies[PolicyNum].rights[{{loop.index0}}].id = {{r}};
-                    {% endfor -%}
-                        PolicyNum = PolicyNum + 1;
-                {% endfor %}
+inline Remove_user_REVOKE(userA,userB)
+{
+    atomic{
+        check_policy_result = false;
+            res_need_check.id = 1;
+            check_policy(res_need_check, 0, userA, 1);
+        
 
 
-                {% if config.isREVOKE == 1 -%}
-                    i = 0;
+        if
+            ::  (check_policy_result == true) ->
+                printf("user_%d perform Remove_user_REVOKE \n", userA);
+
+
+                i = 0;
                     do
                         :: (i < MAXPOLICY) ->
                             if
@@ -316,47 +298,57 @@ inline {{config.ConfigName}}(
                             i = i + 1;
                         :: else -> break;
                     od;
-                    Operation_After_Revoke({{config.Params[1]}})
-                    Operation_After_Revoke_read_data({{config.Params[0]}})
+                    Operation_After_Revoke(userB)
+                    Operation_After_Revoke_read_data(userA)
 
                     Shared = 0;
-                {% endif -%}
-
-                {% if config.isSHARE == 1 -%}
-                    Shared = 1;
-                {% endif -%}
-
-                {% if config.isGUESTMODE == 1 -%}
-                    i = 0;
-                    do
-                        :: (i < MAXRESOURCE) ->
-                            if
-                                :: (Device.resources[i].id == -1) -> break;
-                                :: (Device.resources[i].id == 3 && Device.resources[i].history.userId == userA) ->
-                                    if
-                                        :: (Device.resources[i].history.isEmpty != false) ->
-                                            Device.resources[i].history.isEmpty = true;
-                                        :: else -> skip;
-                                    fi;
-                                :: (Device.resources[i].id == 0 && Device.resources[i].data.userId == userA) ->
-                                    if
-                                        :: (Device.resources[i].data.isEmpty != false) ->
-                                            Device.resources[i].data.isEmpty = true;
-                                        :: else -> skip;
-                                    fi;
-                                :: else -> skip;
-                            fi;
-                            i = i + 1;
-                        :: else -> break;
-                    od;
-                {% endif -%}
-
-            :: else ->
+                :: else ->
                 skip;
         fi;
     }
 }
-{% endfor %}
+
+inline share(userA,userB)
+{
+    atomic{
+        check_policy_result = false;
+            res_need_check.id = 1;
+            check_policy(res_need_check, 0, userA, 1);
+        
+
+
+        if
+            ::  (check_policy_result == true) ->
+                printf("user_%d perform share \n", userA);
+                // Create Policies
+                    Device.canBeRevoked[Device.canBeRevokedNum].id = PolicyNum;
+                        Device.canBeRevokedNum = Device.canBeRevokedNum + 1;
+                    Policies[PolicyNum].id = PolicyNum;
+                    Policies[PolicyNum].resource.id = 0;
+                    Policies[PolicyNum].resource.data.userId = 0;
+                    Policies[PolicyNum].chans[0].id = 0;
+                        Policies[PolicyNum].subs[0].id = userB;
+                    Policies[PolicyNum].rights[0].id = 0;
+                    PolicyNum = PolicyNum + 1;
+                
+                // Create Policies
+                    Policies[PolicyNum].id = PolicyNum;
+                    Policies[PolicyNum].resource.id = 0;
+                    Policies[PolicyNum].resource.data.userId = 0;
+                    Policies[PolicyNum].chans[0].id = 0;
+                        Policies[PolicyNum].subs[0].id = userA;
+                    Policies[PolicyNum].rights[0].id = 0;
+                    PolicyNum = PolicyNum + 1;
+                
+
+
+                Shared = 1;
+                :: else ->
+                skip;
+        fi;
+    }
+}
+
 
 
 
@@ -591,12 +583,12 @@ proctype ProcessHost(){
     bool COMPETE_host_3 = false;
     bool COMPETE_host_4 = false;
     bool COMPETE_host_5 = false;
-
-
-
-    {%- for config in Configurations %}
-        bool COMPETE_host_{{config.ConfigName}} = false;
-    {% endfor %}
+        bool COMPETE_host_Delete_log_REMOVELOG = false;
+    
+        bool COMPETE_host_Remove_user_REVOKE = false;
+    
+        bool COMPETE_host_share = false;
+    
 
     do
         :: (COMPETE_host_1 == false) ->
@@ -608,30 +600,6 @@ proctype ProcessHost(){
                     :: else -> skip;
                 fi;
             }
-
-        {% if has_accesslist -%}
-        :: (COMPETE_host_2 == false) ->
-            atomic{
-                if
-                    :: (COMPETE_host_2 == false) ->
-                        COMPETE_host_2 = true;
-                        Operation_read_accesslist(host);
-                    :: else -> skip;
-                fi;
-            }
-        {% endif -%}
-
-        {% if has_automationlist -%}
-        :: (COMPETE_host_5 == false) ->
-            atomic{
-                if
-                    :: (COMPETE_host_5 == false) ->
-                        COMPETE_host_5 = true;
-                        Operation_view_automationlist(host);
-                    :: else -> skip;
-                fi;
-            }
-        {% endif -%}
 
         :: (COMPETE_host_3 == false) ->
             atomic{
@@ -651,25 +619,39 @@ proctype ProcessHost(){
                     :: else -> skip;
                 fi;
             }
-
-
-    {%- for config in Configurations %}
-        :: (COMPETE_host_{{config.ConfigName}} == false) ->
+        :: (COMPETE_host_Delete_log_REMOVELOG == false) ->
             atomic{
                 if
-                    :: (COMPETE_host_{{config.ConfigName}} == false) ->
-                        COMPETE_host_{{config.ConfigName}} = true;
-                        {% if config.ParamsLen == 1 -%}
-                            {{config.ConfigName}}(host);
-                        {% elif config.ParamsLen == 0 -%}
-                            {{config.ConfigName}}();
-                        {% else -%}
-                            {{config.ConfigName}}(host, guest);
-                        {% endif %}
+                    :: (COMPETE_host_Delete_log_REMOVELOG == false) ->
+                        COMPETE_host_Delete_log_REMOVELOG = true;
+                        Delete_log_REMOVELOG(host, guest);
+                        
                     :: else -> skip;
                 fi;
             }
-    {% endfor %}
+    
+        :: (COMPETE_host_Remove_user_REVOKE == false) ->
+            atomic{
+                if
+                    :: (COMPETE_host_Remove_user_REVOKE == false) ->
+                        COMPETE_host_Remove_user_REVOKE = true;
+                        Remove_user_REVOKE(host, guest);
+                        
+                    :: else -> skip;
+                fi;
+            }
+    
+        :: (COMPETE_host_share == false) ->
+            atomic{
+                if
+                    :: (COMPETE_host_share == false) ->
+                        COMPETE_host_share = true;
+                        share(host, guest);
+                        
+                    :: else -> skip;
+                fi;
+            }
+    
 
     od;
 }
@@ -699,11 +681,12 @@ proctype ProcessGuest(){
     bool COMPETE_guest_3 = false;
     bool COMPETE_guest_4 = false;
     bool COMPETE_guest_5 = false;
-
-
-    {%- for config in Configurations %}
-        bool COMPETE_guest_{{config.ConfigName}} = false;
-    {% endfor %}
+        bool COMPETE_guest_Delete_log_REMOVELOG = false;
+    
+        bool COMPETE_guest_Remove_user_REVOKE = false;
+    
+        bool COMPETE_guest_share = false;
+    
 
     do
         :: (COMPETE_guest_1 == false) ->
@@ -715,30 +698,6 @@ proctype ProcessGuest(){
                     :: else -> skip;
                 fi;
             }
-        {% if has_accesslist -%}
-        :: (COMPETE_guest_2 == false && Shared == 1) ->
-            atomic{
-                if
-                    :: (COMPETE_guest_2 == false && Shared == 1) ->
-                        COMPETE_guest_2 = true;
-                        Operation_read_accesslist(guest);
-                    :: else -> skip;
-                fi;
-            }
-        {% endif -%}
-
-        {% if has_automationlist -%}
-        :: (COMPETE_guest_5 == false) ->
-            atomic{
-                if
-                    :: (COMPETE_guest_5 == false) ->
-                        COMPETE_guest_5 = true;
-                        Operation_view_automationlist(guest);
-                    :: else -> skip;
-                fi;
-            }
-        {% endif -%}
-
         :: (COMPETE_guest_3 == false) ->
             atomic{
                 if
@@ -757,27 +716,39 @@ proctype ProcessGuest(){
                     :: else -> skip;
                 fi;
             }
-
-
-
-
-    {%- for config in Configurations %}
-        :: (COMPETE_guest_{{config.ConfigName}} == false) ->
+        :: (COMPETE_guest_Delete_log_REMOVELOG == false) ->
             atomic{
                 if
-                    :: (COMPETE_guest_{{config.ConfigName}} == false) ->
-                        COMPETE_guest_{{config.ConfigName}} = true;
-                        {% if config.ParamsLen == 1 -%}
-                            {{config.ConfigName}}(guest);
-                        {% elif config.ParamsLen == 0 -%}
-                            {{config.ConfigName}}();
-                        {% else -%}
-                            {{config.ConfigName}}(guest, host);
-                        {% endif %}
+                    :: (COMPETE_guest_Delete_log_REMOVELOG == false) ->
+                        COMPETE_guest_Delete_log_REMOVELOG = true;
+                        Delete_log_REMOVELOG(guest, host);
+                        
                     :: else -> skip;
                 fi;
             }
-    {% endfor %}
+    
+        :: (COMPETE_guest_Remove_user_REVOKE == false) ->
+            atomic{
+                if
+                    :: (COMPETE_guest_Remove_user_REVOKE == false) ->
+                        COMPETE_guest_Remove_user_REVOKE = true;
+                        Remove_user_REVOKE(guest, host);
+                        
+                    :: else -> skip;
+                fi;
+            }
+    
+        :: (COMPETE_guest_share == false) ->
+            atomic{
+                if
+                    :: (COMPETE_guest_share == false) ->
+                        COMPETE_guest_share = true;
+                        share(guest, host);
+                        
+                    :: else -> skip;
+                fi;
+            }
+    
 
     od;
 }
@@ -795,38 +766,32 @@ init
 
         /******************** Device *************************/
             Device.id = 0;
-        {% for res in Resources -%}
-            Device.resources[{{ loop.index0 }}].id = {{ res.id }};
-            {% if res.id == 0 -%}
-            Device.resources[{{ loop.index0 }}].data.userId = {{res.user}};
-            Device.resources[{{ loop.index0 }}].data.isEmpty = false;
-            {% elif res.id == 3 -%}
-            Device.resources[{{ loop.index0 }}].history.userId = {{res.user}};
-            Device.resources[{{ loop.index0 }}].history.isEmpty = false;
-            {% endif -%}
-        {% endfor %}
+        Device.resources[0].id = 0;
+            Device.resources[0].data.userId = 0;
+            Device.resources[0].data.isEmpty = false;
+            Device.resources[1].id = 1;
+            
 
         /******************** Default Policies *************************/
-
-        {%- for dp in DefaultPolicies %}
-            {% if dp.canBeRevoked == 1 -%}
-                Device.canBeRevoked[Device.canBeRevokedNum].id = PolicyNum;
-                Device.canBeRevokedNum = Device.canBeRevokedNum + 1;
-            {% endif -%}
             Policies[PolicyNum].id = PolicyNum;
-            Policies[PolicyNum].resource.id = {{dp.resource.id}};
-            {% if dp.resource.id == 0 -%}
-                Policies[PolicyNum].resource.data.userId = {{dp.resource.user}};
-            {% elif dp.resource.id == 3 -%}
-                Policies[PolicyNum].resource.history.userId = {{dp.resource.user}};
-            {% endif -%}
-                Policies[PolicyNum].chans[0].id = {{dp.channel}};
-                Policies[PolicyNum].subs[0].id = {{dp.user}};
-            {% for r in dp.rights -%}
-                Policies[PolicyNum].rights[{{loop.index0}}].id = {{r}};
-            {% endfor -%}
-                PolicyNum = PolicyNum + 1;
-        {% endfor %}
+            Policies[PolicyNum].resource.id = 1;
+            Policies[PolicyNum].chans[0].id = 0;
+                Policies[PolicyNum].subs[0].id = host;
+            Policies[PolicyNum].rights[0].id = 0;
+            Policies[PolicyNum].rights[1].id = 1;
+            Policies[PolicyNum].rights[2].id = 2;
+            PolicyNum = PolicyNum + 1;
+        
+            Policies[PolicyNum].id = PolicyNum;
+            Policies[PolicyNum].resource.id = 0;
+            Policies[PolicyNum].resource.data.userId = 0;
+            Policies[PolicyNum].chans[0].id = 0;
+                Policies[PolicyNum].subs[0].id = host;
+            Policies[PolicyNum].rights[0].id = 0;
+            Policies[PolicyNum].rights[1].id = 1;
+            Policies[PolicyNum].rights[2].id = 2;
+            PolicyNum = PolicyNum + 1;
+        
 
 
     }

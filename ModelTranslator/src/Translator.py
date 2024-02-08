@@ -10,7 +10,8 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__)) + "/"
 DEVICE_NAME = ""
 DEVICE_RESOURCES = []
 DEVICE_POLICIES = {"default": {"Constrains": [], "Policies": []}, "Configurations": []}
-
+has_automationlist = False
+has_accesslist = False
 
 def MappingResource(resource: str):
     ret = {
@@ -125,6 +126,12 @@ def ParseConfigurations(file: str):
 
     DEVICE_NAME = config["Device"]
     DEVICE_RESOURCES = [MappingResource(i) for i in config["Resource"]]
+
+    for r in DEVICE_RESOURCES:
+        if(r['id'] == 1):
+            has_accesslist = True
+        elif(r['id'] == 7):
+            has_automationlist = True
     '''
     DEVICE_POLICIES = {
         "default": {
@@ -174,7 +181,7 @@ if __name__ == "__main__":
     ParseConfigurations(options.config)
 
     PG = PromelaGenerator(BASE_DIR, BASE_DIR + f"/../output/{DEVICE_NAME}.pml")
-    PG.Generate(DEVICE_NAME, DEVICE_RESOURCES, DEVICE_POLICIES)
+    PG.Generate(DEVICE_NAME, DEVICE_RESOURCES, DEVICE_POLICIES,has_automationlist,has_accesslist)
     print(DEVICE_NAME)
     print(DEVICE_RESOURCES)
     print(DEVICE_POLICIES)
