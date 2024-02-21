@@ -257,7 +257,7 @@ inline share(userA,userB)
 {
     atomic{
         check_policy_result = false;
-            res_need_check.id = 1;
+            res_need_check.id = 11;
             check_policy(res_need_check, 0, userA, 1);
         
 
@@ -446,6 +446,41 @@ inline Operation_After_Revoke(userA){
     }
 }
 
+inline Operation_After_Revoke_read_data(userA){
+    atomic{
+        i = 0;
+        do
+            :: (i < MAXRESOURCE) ->
+                if
+                    :: (Device.resources[i].id == -1) -> break;
+                    :: (Device.resources[i].id == 0) ->
+                        if
+                            :: (Device.resources[i].data.isEmpty == false) ->
+
+                                check_policy_result = false;
+                                // {resource:0, channel_id:-1, userA, right_id}
+                                res_need_check.id = 0;
+                                res_need_check.data.userId = Device.resources[i].data.userId;
+                                check_policy(res_need_check, -1, userA, 0)
+                                if
+                                    ::  (check_policy_result == true) ->
+                                    printf("After revoked, user_%d read personal data of user_%d through 'MiHome app'\n", userA, Device.resources[i].data.userId);
+
+                                        assert (userA == Device.resources[i].data.userId);
+                                    :: else ->
+                                        skip;
+                                fi;
+                            :: else -> skip;
+                        fi;
+                    :: else -> skip;
+                fi;
+                i = i + 1;
+            :: else -> break;
+        od;
+
+    }
+}
+
 
 
 proctype ProcessHost(){
@@ -486,15 +521,7 @@ proctype ProcessHost(){
                     :: else -> skip;
                 fi;
             }
-        :: (COMPETE_host_2 == false) ->
-            atomic{
-                if
-                    :: (COMPETE_host_2 == false) ->
-                        COMPETE_host_2 = true;
-                        Operation_read_accesslist(host);
-                    :: else -> skip;
-                fi;
-            }
+
         :: (COMPETE_host_3 == false) ->
             atomic{
                 if
@@ -510,15 +537,6 @@ proctype ProcessHost(){
                     :: (COMPETE_host_4 == false) ->
                         COMPETE_host_4 = true;
                         Operation_delete_history(host, host);
-                    :: else -> skip;
-                fi;
-            }
-        :: (COMPETE_host_5 == false) ->
-            atomic{
-                if
-                    :: (COMPETE_host_5 == false) ->
-                        COMPETE_host_5 = true;
-                        Operation_view_automationlist(host);
                     :: else -> skip;
                 fi;
             }
@@ -575,15 +593,6 @@ proctype ProcessGuest(){
                     :: else -> skip;
                 fi;
             }
-        :: (COMPETE_guest_2 == false && Shared == 1) ->
-            atomic{
-                if
-                    :: (COMPETE_guest_2 == false && Shared == 1) ->
-                        COMPETE_guest_2 = true;
-                        Operation_read_accesslist(guest);
-                    :: else -> skip;
-                fi;
-            }
         :: (COMPETE_guest_3 == false) ->
             atomic{
                 if
@@ -599,16 +608,6 @@ proctype ProcessGuest(){
                     :: (COMPETE_guest_4 == false) ->
                         COMPETE_guest_4 = true;
                         Operation_delete_history(guest, guest);
-                    :: else -> skip;
-                fi;
-            }
-
-        :: (COMPETE_guest_5 == false) ->
-            atomic{
-                if
-                    :: (COMPETE_guest_5 == false) ->
-                        COMPETE_guest_5 = true;
-                        Operation_view_automationlist(guest);
                     :: else -> skip;
                 fi;
             }
@@ -648,7 +647,7 @@ init
             Device.resources[1].data.isEmpty = false;
             Device.resources[2].id = 5;
             Device.resources[3].id = 4;
-            Device.resources[4].id = 1;
+            Device.resources[4].id = 11;
             
 
         /******************** Default Policies *************************/
@@ -671,7 +670,7 @@ init
             PolicyNum = PolicyNum + 1;
         
             Policies[PolicyNum].id = PolicyNum;
-            Policies[PolicyNum].resource.id = 1;
+            Policies[PolicyNum].resource.id = 11;
             Policies[PolicyNum].chans[0].id = 0;
                 Policies[PolicyNum].subs[0].id = host;
             Policies[PolicyNum].rights[0].id = 0;
