@@ -60,6 +60,34 @@ def png_resize(file, resol_x, resol_y):
         return -1
 
 
+def is_blank_or_empty(s: str):
+    if (not s.strip()):
+        return True
+
+    if (not bool(re.search(r'\b[a-zA-Z\u4e00-\u9fff]+\b', s))):
+        return True
+
+    return False
+
+
+def decode_bytes(byte_data):
+    try:
+        # 尝试用UTF-8解码
+        decoded_str = byte_data.decode('utf-8')
+
+        if (bool(re.search(r'\\[uU]{1}[0-9a-fA-F]+', decoded_str))):
+            decoded_str = decoded_str.encode('utf-8').decode('unicode_escape')
+
+        return decoded_str
+    except UnicodeDecodeError:
+        try:
+            # 尝试用Unicode转义序列解码
+            unicode_str = byte_data.decode('unicode_escape')
+            return unicode_str
+        except UnicodeDecodeError:
+            print("无法解码字节数据")
+
+
 class Node:
 
     def __init__(self, name, description='', state=''):
@@ -73,10 +101,11 @@ class Node:
 
 class Edge:
 
-    def __init__(self, start_node, end_node, event_strs: list):
+    def __init__(self, start_node, end_node, event_strs: list, description=None):
         self.start_node = start_node
         self.end_node = end_node
         self.event_strs = event_strs
+        self.description = description
 
 
 class DirectedGraph:
@@ -108,11 +137,14 @@ class DirectedGraph:
         if (edge.end_node.name not in self.edges_dict[edge.start_node.name]):
             self.edges_dict[edge.start_node.name][edge.end_node.name] = []
 
-        for event in edge.event_strs:
-            self.edges_dict[edge.start_node.name][edge.end_node.name].append(event)
+        if (edge.event_strs):
+            for event in edge.event_strs:
+                self.edges_dict[edge.start_node.name][edge.end_node.name].append(event)
+
+        if (edge.description):
+            self.edges_dict[edge.start_node.name][edge.end_node.name].append(edge.description)
 
     def find_shortest_path(self, node_1: str, node_2: str):
-
         if node_1 not in self.nodes_dict or node_2 not in self.nodes_dict:
             print("[ERR]: Cannot find node")
             return None
@@ -150,7 +182,10 @@ class DirectedGraph:
         added_edges = set()
 
         for edge in graph.edges:
-            edge_str = f'  "{edge.start_node.name}" -> "{edge.end_node.name}"'
+            if edge.description:
+                edge_str = f'  "{edge.start_node.name}" -> "{edge.end_node.name}" [label="{edge.description}"]'
+            else:
+                edge_str = f'  "{edge.start_node.name}" -> "{edge.end_node.name}"'
             if edge_str not in added_edges:
                 dot_content += edge_str + "\n"
                 added_edges.add(edge_str)
@@ -195,7 +230,7 @@ def add_testdata_for_task(task):
 
     log = ["records", "log"]
 
-    automation = ["automation"]
+    automation = ["automation", "timer"]
 
     result = task
     for key in username:
@@ -212,7 +247,7 @@ def add_testdata_for_task(task):
 
     for i in automation:
         if (i in task.lower()):
-            result = result + ", with the name `TESTAutomation` and the task: Play music in 1 minute."
+            result = result + ", with the name `TESTAutomation` and the task: Activate it in 1 minute."
 
     for key in testdata:
         if (key in task.lower()):
@@ -243,6 +278,54 @@ def parse_config_resource_mapping(text):
                 task = match[2].split(",")
             related_resources = match[3].split(',')
             related_resources = [r.strip() for r in related_resources]
+
+            for i in range(len(task)):
+                task[i] = task[i].replace('<', '').replace('>', '')
+                task[i] = add_testdata_for_task(task[i])
+
+            ConfigResourceMapper.append({"Id": config_id, "Path": config_path, "Tasks": task, "Resources": related_resources})
+
+            print("Configuration Id:", config_id)
+            print("Configuration Path:", config_path)
+            print("Task:", task)
+            print("Related Resources:", related_resources)
+        except Exception as e:
+            print(e)
+
+    print(
+        "----------------------------------------------------------------------------------------------------------------------------------------------"
+    )
+    return ConfigResourceMapper
+
+
+# 解析GPT返回的mapping
+def Plugin_parse_config_resource_mapping(text):
+    ConfigResourceMapper = []
+
+    pattern = re.compile(r'Action path id: (.*?)\n.*?Action path: (.*?)\n.*?Tasks: (.*?)\n.*?Related resources: (.*?)\n',
+                         re.DOTALL)
+    matches = pattern.findall(text)
+
+    # print(matches)
+
+    for match in matches:
+        try:
+            config_id = eval(match[0].replace('<', '').replace('>', ''))
+            config_path = match[1].replace('<', '').replace('>', '')  # 使用 eval 将字符串转为列表
+            if ("<" in match[2] and ">" in match[2]):
+                task = match[2].split(">,")
+            elif ("\n" in match[2]):
+                task = match[2].split("\n")
+            else:
+                task = match[2].split(",")
+            _resources = re.findall("<(.*?)>", match[3])
+            related_resources = []
+
+            for r in _resources:
+                if ("," not in r):
+                    continue
+                op_index = r.index(",")
+                related_resources.append([r[:op_index].strip(), r[op_index + 1:].strip()])
 
             for i in range(len(task)):
                 task[i] = task[i].replace('<', '').replace('>', '')
@@ -296,9 +379,10 @@ def filter_configurations(ConfigResourceMapper):
         "Third-party services"
     ]
     access = ['view', 'access', 'retrieve', 'open', 'obtain', 'read', 'inspect']
-    adds = ['add', 'include', 'append', 'insert', 'attach', 'incorporate', 'integrate', 'augment', 'expand', 'combine']
+    adds = ['add ', 'include', 'append', 'insert', 'attach', 'incorporate', 'integrate', 'augment', 'expand', 'combine']
     removes = [
-        "initiate", "set", "edit", "modify", "change", "configure", "remove", "erase", "delete", "eliminate", "replace", "clear"
+        "initiate", "set ", "edit", "modify", "change", "configure", "remove", "erase", "delete", "eliminate", "replace",
+        "clear"
     ]
 
     norepeat_mapper = []
@@ -359,6 +443,8 @@ def filter_configurations(ConfigResourceMapper):
                     get_longest_task(remove_tasks),
                 ]
                 FilteredConfigResourceMapper.append(c)
+            elif (len(add_tasks) == 0 and len(remove_tasks) == 0):
+                continue
             else:
                 c["Tasks"] = [
                     get_longest_task(tasks),
@@ -373,10 +459,14 @@ def get_ConfigResourceMapper_from_file(file, dir=None):
         content = f.read()
 
     ConfigResourceMapper = json.loads(content)
-    if ("FilteredConfigResourceMapping" not in file and dir):
-        ConfigResourceMapper = filter_configurations(ConfigResourceMapper)
+    filtered_mapping_path = ''
+    if (dir):
+        filtered_mapping_path = dir + "/FilteredConfigResourceMapping.txt"
+    if ("FilteredConfigResourceMapping" not in file and filtered_mapping_path != '' and
+            not os.path.exists(filtered_mapping_path)):
+        FilteredConfigResourceMapper = filter_configurations(ConfigResourceMapper)
         with open(dir + "/FilteredConfigResourceMapping.txt", 'w') as f:
-            f.write(json.dumps(ConfigResourceMapper))
+            f.write(json.dumps(FilteredConfigResourceMapper))
     return ConfigResourceMapper
 
 

@@ -34,7 +34,7 @@ class Confiot:
         self.app: App = None
         self.utg_graph: DirectedGraph = None
         self.uiTree: UITree = None
-        # [{"Path": config_path, "Task": task, "Resources": related_resources, "state":state_str}]
+        # [{"Id": config_id, "Path": config_path, "Tasks": task, "Resources": related_resources, "state":state_str}]
         self.ConfigResourceMapper = []
         self.FilteredConfigResourceMapper = []
 
@@ -135,7 +135,7 @@ class Confiot:
 
         paths_str_list = []
         paths_frags = []
-        frags_size = len(paths["text_paths"]) // 20
+        frags_size = (len(paths["text_paths"]) // 20) + 1
         id = 0
         for p in paths["text_paths"]:
             p_str = "\",\"".join(p)
@@ -148,7 +148,10 @@ class Confiot:
 
         mapper = []
         for i in range(frags_size):
-            paths_str = ''.join(paths_str_list[i * 20:(i + 1) * 20])
+            if(i == frags_size - 1):
+                paths_str = ''.join(paths_str_list[i * 20:])
+            else:
+                paths_str = ''.join(paths_str_list[i * 20:(i + 1) * 20])
 
             prompt = ''
             with open(BASE_DIR + "/prompt/ConfigResourceMapping.txt") as f:
@@ -551,6 +554,7 @@ class Confiot:
                         continue
                     e = self.events[event_str]
 
+
                     # 不包括返回的边
                     if ("name=BACK" in event_str):
                         continue
@@ -590,6 +594,7 @@ class Confiot:
                         else:
                             event_config[event_str] = self.uiTree.nodes_dict[config_id]
 
+
         indegree = {}
         for n in self.uiTree.nodes:
             indegree[n] = 0
@@ -613,21 +618,22 @@ class Confiot:
         # self.uiTree.nodes_dict["000"] = start_node
         # self.uiTree.add_node(start_node)
 
-        # for n in indegree:
-        #     if (indegree[n] == 0):
-        #         e = Edge(start_node, n, [])
-        #         self.uiTree.add_edge(e)
+        start_nodes = []
+        for n in indegree:
+            if (indegree[n] == 0):
+                start_nodes.append(n)
 
         # print("[DBG]: UITree start node:", start_node)
         UITree.draw(self.uiTree, settings.Confiot_output)
 
         config_paths = []
-        for n in self.uiTree.nodes:
-            p = self.uiTree.find_shortest_path(self.uiTree.start_node, n.name)
-            if (not p or p == []):
-                continue
-            # p = [i.description for i in p]
-            config_paths.append(p)
+        for s in start_nodes:
+            for n in self.uiTree.nodes:
+                p = self.uiTree.find_shortest_path(s.name, n.name)
+                if (not p or p == []):
+                    continue
+                # p = [i.description for i in p]
+                config_paths.append(p)
 
         return config_paths
 
@@ -863,7 +869,7 @@ class ConfiotGuest(Confiot):
         super().__init__()
 
     # walk through all states and store the UI hierachy in UI/
-    def device_state_replay(self, host_analyzing_config: str, replay_point=''):
+    def device_state_replay(self, host_analyzing_config: str, related_resources=None):
         STEP1 = '''
 ###################################
 ### Traverse static UI states #####
@@ -873,23 +879,29 @@ class ConfiotGuest(Confiot):
 
         begin_flag = False
 
-        if (replay_point == ''):
-            begin_flag = True
-        for node in self.utg_graph.nodes:
-            if (replay_point != '' and not begin_flag):
-                if (node.name == replay_point):
-                    begin_flag = True
-                else:
-                    continue
-            if (begin_flag):
-                finished = self.device_to_state(host_analyzing_config, node.name)
-                if (finished):
-                    self.device_get_UIElement(host_analyzing_config, node.name)
+        # 过滤与realted_resources无关的state replay
+        related_states = set()
+        for m in self.ConfigResourceMapper:
+            flag = False
+            if (related_resources is None or related_resources == []):
+                flag = True
+            else:
+                for r in related_resources:
+                    if (r in m['Resources']):
+                        flag = True
+                        break
+            if (flag):
+                related_states.add(m['state'])
+
+        for s in related_states:
+            finished = self.device_to_state(host_analyzing_config, s)
+            if (finished):
+                self.device_get_UIElement(host_analyzing_config, s)
 
         print(DONE)
 
     # get all configurations list and test them one by one
-    def device_guest_config_walker(self, host_analyzing_config: str, walker_point=''):
+    def device_guest_config_walker(self, host_analyzing_config: str, related_resources=None):
         # test all configs in conf_list and genreate UI hierachy and screenshots
         STEP2 = '''
 ###################################
@@ -898,32 +910,31 @@ class ConfiotGuest(Confiot):
 '''
         print(STEP2)
 
-        begin_flag = False
+        related_confs = []
 
-        if (walker_point == ''):
-            begin_flag = True
+        states_in_mapper = []
+        for m in self.ConfigResourceMapper:
+            states_in_mapper.append(m['state'])
+
+        for conf in self.conf_list:
+            if (conf["from_state"] in states_in_mapper or conf["to_state"] in states_in_mapper):
+                related_confs.append(conf)
 
         target_states = []
-        for conf in self.conf_list:
-            if (walker_point != '' and not begin_flag):
-                if (conf["view_images"] + str(conf["event_id"]) == walker_point):
-                    begin_flag = True
-                else:
-                    continue
-            if (begin_flag):
-                if (conf["to_state"] in target_states):
-                    continue
-                else:
-                    target_states.append(conf["to_state"])
-                enabled = self.device_guest_config_test(host_analyzing_config, conf)
-                if (not enabled):
-                    infl = {}
-                    infl["id"] = len(self.conf_list)
-                    infl["influenceType"] = settings.CONFIG_DISABLED
-                    infl["content"] = {}
-                    infl["content"]["view"] = conf["view_images"]
-                    infl["content"]["state"] = conf["from_state"]
-                    self.result.append(infl)
+        for conf in related_confs:
+            if (conf["to_state"] in target_states):
+                continue
+            else:
+                target_states.append(conf["to_state"])
+            enabled = self.device_guest_config_test(host_analyzing_config, conf)
+            # if (not enabled):
+            #     infl = {}
+            #     infl["id"] = len(self.conf_list)
+            #     infl["influenceType"] = settings.CONFIG_DISABLED
+            #     infl["content"] = {}
+            #     infl["content"]["view"] = conf["view_images"]
+            #     infl["content"]["state"] = conf["from_state"]
+            #     self.result.append(infl)
         print(DONE)
 
     # analyze the state transition screenshots of the configs in conf_list with gpt
