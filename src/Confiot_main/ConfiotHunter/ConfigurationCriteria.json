@@ -1,0 +1,34 @@
+{
+    "Criteria": [
+        {
+            "Id": "1",
+            "Role": "Administrators, Guests",
+            "Capabilities": "Should be able to view the list of all current users"
+        },
+        {
+            "Id": "2",
+            "Role": "Administrators, Guests",
+            "Capabilities": "Should not view or modify privacy data of other users"
+        },
+        {
+            "Id": "3",
+            "Role": "Guests",
+            "Capabilities": "Should not modify WiFi password"
+        },
+        {
+            "Id": "4",
+            "Role": "Guests",
+            "Capabilities": "Should not delete the device from the device list or smart home"
+        },
+        {
+            "Id": "5",
+            "Role": "Guests",
+            "Capabilities": "Should not access or edit user access rights"
+        },
+        {
+            "Id": "6",
+            "Role": "Administrators, Guests",
+            "Capabilities": "Should not access or edit any resource of other users, including device automation/scheduled task, history, log and other resource created by others"
+        }
+    ]
+}

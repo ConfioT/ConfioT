@@ -1,0 +1,9 @@
+xmldiff==2.6.3
+Pillow==10.1.0
+numpy
+tree-sitter
+tree-sitter-javascript
+graphviz
+nltk
+cleantext
+openai
