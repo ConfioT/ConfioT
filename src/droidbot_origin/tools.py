@@ -331,15 +331,3 @@ def hash_string(string):
 
 if __name__ == '__main__':
     print(query_gpt('how can i cancel wechat charge'))
-    # import openai
-    #
-    # openai.api_key = "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"  # 替换成你的API密钥
-    #
-    #
-    # response = openai.Completion.create(
-    #     engine="davinci",
-    #     prompt="Translate the following English text to French: 'Hello, how are you?'",
-    #     max_tokens=50
-    # )
-    #
-    # print(response.choices[0].text.strip())
