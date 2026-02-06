@@ -1,0 +1,16 @@
+
+
+
+### Current user Role: {{ROLE}}
+
+
+{{UICHANGE}}
+
+
+### The security criteria are:
+'''
+{{CRITERIA}}
+'''
+
+
+
